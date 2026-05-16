@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mnandi Pricer">
+<meta name="theme-color" content="#8B0000">
+<title>Mnandi Tray Pricer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red:        #8B0000;
+    --red-mid:    #C0392B;
+    --red-light:  #FADBD8;
+    --red-faint:  #FDF2F2;
+    --white:      #FFFFFF;
+    --off-white:  #FAFAFA;
+    --grey-light: #F3F3F3;
+    --grey-mid:   #DDDDDD;
+    --grey:       #999999;
+    --black:      #1A1A1A;
+    --shadow:     0 2px 16px rgba(139,0,0,0.10);
+    --radius:     14px;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--off-white);
+    font-family: var(--font-body);
+    color: var(--black);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  /* ── App shell ────────────────────────────────────────────────── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--white);
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  }
+
+  /* ── Header ───────────────────────────────────────────────────── */
+  header {
+    background: var(--red);
+    padding: 20px 20px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .brand {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+
+  .brand span {
+    display: block;
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-top: 2px;
+  }
+
+  .settings-btn {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.8);
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .settings-btn:active { background: rgba(255,255,255,0.22); }
+
+  /* ── Product tabs ─────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 2px;
+  }
+
+  .tab {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    border-radius: 10px 10px 0 0;
+    color: rgba(255,255,255,0.6);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 10px 4px 9px;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+  }
+
+  .tab.active {
+    background: var(--white);
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  /* ── Main content ─────────────────────────────────────────────── */
+  main {
+    flex: 1;
+    padding: 20px 16px 32px;
+    overflow-y: auto;
+  }
+
+  /* ── Settings panel ───────────────────────────────────────────── */
+  #settings-panel {
+    display: none;
+    background: var(--grey-light);
+    border: 1px solid var(--grey-mid);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+    animation: slideDown 0.2s ease;
+  }
+  #settings-panel.open { display: block; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .settings-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 12px;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .settings-row:last-child { margin-bottom: 0; }
+
+  .settings-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--black);
+  }
+
+  .settings-input {
+    width: 90px;
+    background: var(--white);
+    border: 1.5px solid var(--grey-mid);
+    border-radius: 8px;
+    color: var(--black);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .settings-input:focus { border-color: var(--red-mid); }
+
+  /* ── Input card ───────────────────────────────────────────────── */
+  .input-card {
+    background: var(--white);
+    border: 1px solid var(--grey-mid);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .input-card-header {
+    background: var(--red);
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--grey-light);
+  }
+  .input-row:last-child { border-bottom: none; }
+
+  .input-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+  }
+
+  .input-label small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--grey);
+    margin-top: 1px;
+  }
+
+  .input-wrapper {
+    position: relative;
+    width: 130px;
+  }
+
+  .input-prefix, .input-suffix {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--red);
+    pointer-events: none;
+  }
+  .input-prefix { left: 12px; }
+  .input-suffix { right: 12px; }
+
+  .price-input {
+    width: 100%;
+    background: var(--red-faint);
+    border: 2px solid var(--red-light);
+    border-radius: 10px;
+    color: var(--black);
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 600;
+    padding: 10px 36px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-appearance: none;
+  }
+  .price-input:focus {
+    border-color: var(--red-mid);
+    background: #fff0f0;
+  }
+  .price-input::placeholder { color: #ccc; font-weight: 400; }
+
+  /* ── Cost inc display ─────────────────────────────────────────── */
+  .cost-inc-display {
+    background: var(--grey-light);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 130px;
+  }
+
+  .cost-inc-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--black);
+  }
+
+  .cost-inc-label-small {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-top: 1px;
+  }
+
+  /* ── Results ──────────────────────────────────────────────────── */
+  .results-card {
+    background: var(--white);
+    border: 1px solid var(--grey-mid);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .results-header {
+    background: var(--red);
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .tray-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--grey-light);
+    transition: background 0.15s;
+  }
+  .tray-row:last-child { border-bottom: none; }
+
+  .tray-row.base-tray {
+    background: var(--red-faint);
+    border-bottom: 1px solid var(--red-light);
+  }
+
+  .tray-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--grey-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+
+  .base-tray .tray-badge {
+    background: var(--red);
+  }
+
+  .tray-badge .tray-num {
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1;
+    color: var(--black);
+  }
+
+  .base-tray .tray-badge .tray-num { color: var(--white); }
+
+  .tray-badge .tray-word {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-top: 1px;
+  }
+
+  .base-tray .tray-badge .tray-word { color: rgba(255,255,255,0.7); }
+
+  .tray-info { flex: 1; }
+
+  .tray-delta {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--grey);
+    margin-bottom: 2px;
+  }
+
+  .base-tray .tray-delta {
+    color: var(--red-mid);
+    font-weight: 600;
+  }
+
+  .tray-price {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--black);
+    line-height: 1;
+  }
+
+  .base-tray .tray-price { color: var(--red); }
+
+  .tray-price-empty {
+    font-size: 24px;
+    color: var(--grey-mid);
+    font-family: var(--font-display);
+  }
+
+  /* ── Markup check ─────────────────────────────────────────────── */
+  .markup-card {
+    background: var(--white);
+    border: 1px solid var(--grey-mid);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .markup-header {
+    background: var(--grey-light);
+    border-bottom: 2px solid var(--red);
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+
+  .markup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--grey-mid);
+  }
+
+  .markup-cell {
+    background: var(--white);
+    padding: 14px 16px;
+  }
+
+  .markup-cell-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 4px;
+  }
+
+  .markup-cell-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--black);
+    line-height: 1;
+  }
+
+  .markup-cell.highlight .markup-cell-value {
+    color: var(--red);
+    font-size: 26px;
+  }
+
+  .markup-cell.highlight {
+    background: var(--red-faint);
+  }
+
+  /* ── Placeholder state ────────────────────────────────────────── */
+  .placeholder {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--grey-mid);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* ── No number spinners ───────────────────────────────────────── */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number] { -moz-appearance: textfield; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        Mnandi Meats
+        <span>Tray Pricing Calculator</span>
+      </div>
+      <button class="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('economy', this)">Economy</button>
+      <button class="tab" onclick="switchTab('commercial', this)">Commercial</button>
+      <button class="tab" onclick="switchTab('superfq', this)">Super FQ</button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Settings panel -->
+    <div id="settings-panel">
+      <div class="settings-title">Global Settings</div>
+      <div class="settings-row">
+        <span class="settings-label">VAT Rate (%)</span>
+        <input class="settings-input" type="number" inputmode="decimal"
+               id="vat-input" value="15.5" step="0.1" onchange="recalc()">
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Tray Offset ($)</span>
+        <input class="settings-input" type="number" inputmode="decimal"
+               id="offset-input" value="0.25" step="0.05" onchange="recalc()">
+      </div>
+    </div>
+
+    <!-- Input card -->
+    <div class="input-card">
+      <div class="input-card-header">Inputs</div>
+
+      <div class="input-row">
+        <div class="input-label">
+          Cost excl. VAT
+          <small>from abattoir invoice</small>
+        </div>
+        <div class="input-wrapper">
+          <span class="input-prefix">$</span>
+          <input class="price-input" type="number" inputmode="decimal"
+                 id="cost-input" placeholder="0.00" step="0.01"
+                 oninput="recalc()">
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label">
+          Cost incl. VAT
+          <small>auto-calculated</small>
+        </div>
+        <div class="cost-inc-display">
+          <div class="cost-inc-value" id="cost-inc-display">—</div>
+          <div class="cost-inc-label-small">incl. VAT</div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label">
+          Markup %
+          <small>enter as whole number</small>
+        </div>
+        <div class="input-wrapper">
+          <input class="price-input" type="number" inputmode="decimal"
+                 id="markup-input" placeholder="30" step="1"
+                 style="padding: 10px 28px 10px 16px;"
+                 oninput="recalc()">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-section"></div>
+
+    <!-- Markup check -->
+    <div id="markup-section"></div>
+
+  </main>
+</div>
+
+<script>
+// ── Product definitions ──────────────────────────────────────────────────────
+const PRODUCTS = {
+  economy:    { name: "Economy",    trays: [["Tray 1",-1],["Tray 2",0],["Tray 3",1],["Tray 4",2]] },
+  commercial: { name: "Commercial", trays: [["Tray 1",-1],["Tray 2",0],["Tray 3",1]] },
+  superfq:    { name: "Super FQ",   trays: [["Tray 1",0],["Tray 2",1]] },
+};
+
+let currentTab = "economy";
+
+function toggleSettings() {
+  const p = document.getElementById("settings-panel");
+  p.classList.toggle("open");
+}
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  // Clear inputs
+  document.getElementById("cost-input").value = "";
+  document.getElementById("markup-input").value = "";
+  recalc();
+}
+
+function getVAT()    { return parseFloat(document.getElementById("vat-input").value) / 100 || 0.155; }
+function getOffset() { return parseFloat(document.getElementById("offset-input").value) || 0.25; }
+
+function roundNearest25(val) {
+  return Math.round(val / 0.25) * 0.25;
+}
+
+function fmt(n) {
+  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtPct(n) {
+  return n.toFixed(1) + "%";
+}
+
+function recalc() {
+  const costExcl  = parseFloat(document.getElementById("cost-input").value);
+  const markupPct = parseFloat(document.getElementById("markup-input").value);
+  const vat       = getVAT();
+  const offset    = getOffset();
+  const product   = PRODUCTS[currentTab];
+
+  // Cost incl VAT display
+  const costIncDisplay = document.getElementById("cost-inc-display");
+  if (!isNaN(costExcl) && costExcl > 0) {
+    const costInc = costExcl * (1 + vat);
+    costIncDisplay.textContent = fmt(costInc);
+  } else {
+    costIncDisplay.textContent = "—";
+  }
+
+  const resultsEl = document.getElementById("results-section");
+  const markupEl  = document.getElementById("markup-section");
+
+  const valid = !isNaN(costExcl) && costExcl > 0 && !isNaN(markupPct) && markupPct > 0;
+
+  if (!valid) {
+    resultsEl.innerHTML = "";
+    markupEl.innerHTML  = "";
+    return;
+  }
+
+  const costInc  = costExcl * (1 + vat);
+  const mkup     = markupPct / 100;
+  const sellRaw  = costInc * (1 + mkup + vat * mkup);
+  const basePrice = roundNearest25(sellRaw);
+
+  // ── Tray prices ────────────────────────────────────────────────────────────
+  let traysHTML = `<div class="results-card">
+    <div class="results-header">Selling Prices &mdash; incl. VAT</div>`;
+
+  const prices = [];
+  product.trays.forEach(([label, delta]) => {
+    const price = basePrice + delta * offset;
+    prices.push(price);
+    const isBase = delta === 0;
+    let deltaText = isBase ? "◀ BASE TRAY" : (delta > 0 ? `+$${(delta * offset).toFixed(2)} from base` : `−$${(Math.abs(delta) * offset).toFixed(2)} from base`);
+    const num = label.replace("Tray ","");
+
+    traysHTML += `
+    <div class="tray-row ${isBase ? "base-tray" : ""}">
+      <div class="tray-badge">
+        <span class="tray-num">${num}</span>
+        <span class="tray-word">Tray</span>
+      </div>
+      <div class="tray-info">
+        <div class="tray-delta">${deltaText}</div>
+        <div class="tray-price">${fmt(price)}</div>
+      </div>
+    </div>`;
+  });
+
+  traysHTML += `</div>`;
+  resultsEl.innerHTML = traysHTML;
+
+  // ── Markup check ───────────────────────────────────────────────────────────
+  const avgSell    = prices.reduce((a,b) => a+b, 0) / prices.length;
+  const grossProfit = avgSell - costInc;
+  const gpMarkup   = (grossProfit / costInc) * 100;
+
+  markupEl.innerHTML = `
+    <div class="markup-card">
+      <div class="markup-header">Markup Check</div>
+      <div class="markup-grid">
+        <div class="markup-cell">
+          <div class="markup-cell-label">Cost incl. VAT</div>
+          <div class="markup-cell-value">${fmt(costInc)}</div>
+        </div>
+        <div class="markup-cell">
+          <div class="markup-cell-label">Avg Sell Price</div>
+          <div class="markup-cell-value">${fmt(avgSell)}</div>
+        </div>
+        <div class="markup-cell">
+          <div class="markup-cell-label">Gross Profit</div>
+          <div class="markup-cell-value">${fmt(grossProfit)}</div>
+        </div>
+        <div class="markup-cell highlight">
+          <div class="markup-cell-label">GP Markup %</div>
+          <div class="markup-cell-value">${fmtPct(gpMarkup)}</div>
+        </div>
+      </div>
+    </div>`;
+
+  // Animate results in
+  resultsEl.style.opacity = 0;
+  markupEl.style.opacity  = 0;
+  requestAnimationFrame(() => {
+    resultsEl.style.transition = "opacity 0.25s";
+    markupEl.style.transition  = "opacity 0.25s ease 0.1s";
+    resultsEl.style.opacity    = 1;
+    markupEl.style.opacity     = 1;
+  });
+}
+</script>
+
+<!-- PWA manifest inline -->
+<script>
+const manifest = {
+  name: "Mnandi Tray Pricer",
+  short_name: "Pricer",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#8B0000",
+  theme_color: "#8B0000",
+  icons: [{
+    src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%238B0000'/><text y='68' x='50' text-anchor='middle' font-size='58' font-family='Georgia,serif' fill='white'>M</text></svg>",
+    sizes: "192x192", type: "image/svg+xml"
+  }]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type: "application/json"});
+const url  = URL.createObjectURL(blob);
+const link = document.createElement("link");
+link.rel = "manifest"; link.href = url;
+document.head.appendChild(link);
+</script>
+
+</body>
+</html>
