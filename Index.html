@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mnandi Pricer">
+<meta name="theme-color" content="#8B0000">
+<title>Mnandi Tray Pricer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#8B0000;--red-mid:#C0392B;--red-light:#FADBD8;--red-faint:#FDF2F2;
+    --white:#FFFFFF;--off-white:#FAFAFA;--grey-light:#F3F3F3;--grey-mid:#DDDDDD;
+    --grey:#999999;--black:#1A1A1A;--shadow:0 2px 16px rgba(139,0,0,0.10);
+    --radius:14px;--font-display:'Playfair Display',Georgia,serif;--font-body:'DM Sans',sans-serif;
+  }
+  html,body{height:100%;background:var(--off-white);font-family:var(--font-body);color:var(--black);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  #app{display:flex;flex-direction:column;min-height:100dvh;max-width:480px;margin:0 auto;background:var(--white);box-shadow:0 0 40px rgba(0,0,0,0.08)}
+  header{background:var(--red);padding:16px 20px 0;position:relative;overflow:hidden}
+  header::after{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
+  .header-logo{width:52px;height:52px;object-fit:contain;border-radius:8px;background:white;padding:3px;flex-shrink:0}
+  .brand{font-family:var(--font-display);font-size:20px;color:var(--white);letter-spacing:0.5px;line-height:1.1;flex:1}
+  .brand span{display:block;font-family:var(--font-body);font-weight:300;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:2px}
+  .settings-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.8);font-family:var(--font-body);font-size:12px;letter-spacing:1px;padding:7px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .settings-btn:active{background:rgba(255,255,255,0.22)}
+  .tabs{display:flex;gap:4px;padding:0 2px}
+  .tab{flex:1;background:rgba(255,255,255,0.12);border:none;border-radius:10px 10px 0 0;color:rgba(255,255,255,0.6);font-family:var(--font-body);font-size:11px;font-weight:500;letter-spacing:0.5px;padding:10px 4px 9px;cursor:pointer;transition:all 0.2s;-webkit-tap-highlight-color:transparent;text-align:center}
+  .tab.active{background:var(--white);color:var(--red);font-weight:600}
+  main{flex:1;padding:20px 16px 32px;overflow-y:auto}
+  #settings-panel{display:none;background:var(--grey-light);border:1px solid var(--grey-mid);border-radius:var(--radius);padding:16px;margin-bottom:20px;animation:slideDown 0.2s ease}
+  #settings-panel.open{display:block}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .settings-title{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:12px}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .settings-row:last-child{margin-bottom:0}
+  .settings-label{font-size:13px;font-weight:500;color:var(--black)}
+  .settings-input{width:90px;background:var(--white);border:1.5px solid var(--grey-mid);border-radius:8px;color:var(--black);font-family:var(--font-body);font-size:14px;font-weight:600;padding:8px 10px;text-align:center;outline:none;transition:border-color 0.2s}
+  .settings-input:focus{border-color:var(--red-mid)}
+  .input-card{background:var(--white);border:1px solid var(--grey-mid);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+  .input-card-header{background:var(--red);padding:10px 16px;font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.85)}
+  .input-row{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--grey-light)}
+  .input-row:last-child{border-bottom:none}
+  .input-label{flex:1;font-size:13px;font-weight:500;color:#555}
+  .input-label small{display:block;font-size:10px;font-weight:400;color:var(--grey);margin-top:1px}
+  .input-wrapper{position:relative;width:130px}
+  .input-prefix,.input-suffix{position:absolute;top:50%;transform:translateY(-50%);font-size:15px;font-weight:600;color:var(--red);pointer-events:none}
+  .input-prefix{left:12px}.input-suffix{right:12px}
+  .price-input{width:100%;background:var(--red-faint);border:2px solid var(--red-light);border-radius:10px;color:var(--black);font-family:var(--font-body);font-size:18px;font-weight:600;padding:10px 36px;text-align:center;outline:none;transition:border-color 0.2s,background 0.2s;-webkit-appearance:none}
+  .price-input:focus{border-color:var(--red-mid);background:#fff0f0}
+  .price-input::placeholder{color:#ccc;font-weight:400}
+  .cost-inc-display{background:var(--grey-light);border-radius:10px;padding:10px 14px;text-align:center;min-width:130px}
+  .cost-inc-value{font-size:17px;font-weight:600;color:var(--black)}
+  .cost-inc-label-small{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--grey);margin-top:1px}
+  .results-card{background:var(--white);border:1px solid var(--grey-mid);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+  .results-header{background:var(--red);padding:10px 16px;font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.85)}
+  .tray-row{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--grey-light);transition:background 0.15s}
+  .tray-row:last-child{border-bottom:none}
+  .tray-row.base-tray{background:var(--red-faint);border-bottom:1px solid var(--red-light)}
+  .tray-badge{width:52px;height:52px;border-radius:12px;background:var(--grey-light);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-right:14px;flex-shrink:0}
+  .base-tray .tray-badge{background:var(--red)}
+  .tray-badge .tray-num{font-family:var(--font-display);font-size:20px;line-height:1;color:var(--black)}
+  .base-tray .tray-badge .tray-num{color:var(--white)}
+  .tray-badge .tray-word{font-size:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--grey);margin-top:1px}
+  .base-tray .tray-badge .tray-word{color:rgba(255,255,255,0.7)}
+  .tray-info{flex:1}
+  .tray-delta{font-size:11px;font-weight:500;color:var(--grey);margin-bottom:2px}
+  .base-tray .tray-delta{color:var(--red-mid);font-weight:600}
+  .tray-price{font-family:var(--font-display);font-size:28px;color:var(--black);line-height:1}
+  .base-tray .tray-price{color:var(--red)}
+  .markup-card{background:var(--white);border:1px solid var(--grey-mid);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  .markup-header{background:var(--grey-light);border-bottom:2px solid var(--red);padding:10px 16px;font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--red)}
+  .markup-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--grey-mid)}
+  .markup-cell{background:var(--white);padding:14px 16px}
+  .markup-cell-label{font-size:10px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
+  .markup-cell-value{font-family:var(--font-display);font-size:22px;color:var(--black);line-height:1}
+  .markup-cell.highlight .markup-cell-value{color:var(--red);font-size:26px}
+  .markup-cell.highlight{background:var(--red-faint)}
+  .formula-note{font-size:10px;color:var(--grey);text-align:center;padding:10px 16px 0;letter-spacing:0.3px}
+  input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+  input[type=number]{-moz-appearance:textfield}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-top">
+      <img class="header-logo" id="logo-img" src="data:image/jpeg;base64,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" alt="Mnandi Meats">
+      <div class="brand">Mnandi Meats<span>Tray Pricing Calculator</span></div>
+      <button class="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('economy', this)">Economy</button>
+      <button class="tab" onclick="switchTab('commercial', this)">Commercial</button>
+      <button class="tab" onclick="switchTab('superfq', this)">Super FQ</button>
+    </div>
+  </header>
+  <main>
+    <div id="settings-panel">
+      <div class="settings-title">Global Settings</div>
+      <div class="settings-row">
+        <span class="settings-label">VAT Rate (%)</span>
+        <input class="settings-input" type="number" inputmode="decimal" id="vat-input" value="15.5" step="0.1" onchange="recalc()">
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Tray Offset ($)</span>
+        <input class="settings-input" type="number" inputmode="decimal" id="offset-input" value="0.25" step="0.05" onchange="recalc()">
+      </div>
+    </div>
+    <div class="input-card">
+      <div class="input-card-header">Inputs</div>
+      <div class="input-row">
+        <div class="input-label">Cost excl. VAT<small>from abattoir invoice</small></div>
+        <div class="input-wrapper">
+          <span class="input-prefix">$</span>
+          <input class="price-input" type="number" inputmode="decimal" id="cost-input" placeholder="0.00" step="0.01" oninput="recalc()">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-label">Cost incl. VAT<small>auto-calculated</small></div>
+        <div class="cost-inc-display">
+          <div class="cost-inc-value" id="cost-inc-display">—</div>
+          <div class="cost-inc-label-small">incl. VAT</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-label">Markup %<small>enter as whole number</small></div>
+        <div class="input-wrapper">
+          <input class="price-input" type="number" inputmode="decimal" id="markup-input" placeholder="30" step="1" style="padding:10px 28px 10px 16px;" oninput="recalc()">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+    </div>
+    <div id="results-section"></div>
+    <div id="markup-section"></div>
+  </main>
+</div>
+<script>
+const PRODUCTS = {
+  economy:    { name:"Economy",    trays:[["Tray 1",-1],["Tray 2",0],["Tray 3",1],["Tray 4",2]] },
+  commercial: { name:"Commercial", trays:[["Tray 1",-1],["Tray 2",0],["Tray 3",1]] },
+  superfq:    { name:"Super FQ",   trays:[["Tray 1",0],["Tray 2",1]] },
+};
+
+let currentTab = "economy";
+
+function toggleSettings() { document.getElementById("settings-panel").classList.toggle("open"); }
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("cost-input").value = "";
+  document.getElementById("markup-input").value = "";
+  recalc();
+}
+
+function getVAT()    { return parseFloat(document.getElementById("vat-input").value) / 100 || 0.155; }
+function getOffset() { return parseFloat(document.getElementById("offset-input").value) || 0.25; }
+function roundNearest25(val) { return Math.round(val / 0.25) * 0.25; }
+function fmt(n) { return "$" + n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtPct(n) { return n.toFixed(1) + "%"; }
+
+// Corrected markup: Profit after VAT = (SP - Cost) / (1 + VAT), Markup = Profit / Cost
+function calcMarkupPct(sellInc, costInc) {
+  const vat = getVAT();
+  const profit = (sellInc - costInc) / (1 + vat);
+  return (profit / costInc) * 100;
+}
+
+function recalc() {
+  const costExcl  = parseFloat(document.getElementById("cost-input").value);
+  const markupPct = parseFloat(document.getElementById("markup-input").value);
+  const vat       = getVAT();
+  const offset    = getOffset();
+  const product   = PRODUCTS[currentTab];
+
+  const costIncDisplay = document.getElementById("cost-inc-display");
+  if (!isNaN(costExcl) && costExcl > 0) {
+    costIncDisplay.textContent = fmt(costExcl * (1 + vat));
+  } else {
+    costIncDisplay.textContent = "—";
+  }
+
+  const resultsEl = document.getElementById("results-section");
+  const markupEl  = document.getElementById("markup-section");
+  const valid = !isNaN(costExcl) && costExcl > 0 && !isNaN(markupPct) && markupPct > 0;
+
+  if (!valid) { resultsEl.innerHTML = ""; markupEl.innerHTML = ""; return; }
+
+  const costInc  = costExcl * (1 + vat);
+  const mkup     = markupPct / 100;
+  const sellRaw  = costInc * (1 + mkup + vat * mkup);
+  const basePrice = roundNearest25(sellRaw);
+
+  let traysHTML = `<div class="results-card"><div class="results-header">Selling Prices &mdash; incl. VAT</div>`;
+  const prices = [];
+
+  product.trays.forEach(([label, delta]) => {
+    const price = basePrice + delta * offset;
+    prices.push(price);
+    const isBase = delta === 0;
+    const deltaText = isBase ? "◀ BASE TRAY"
+      : (delta > 0 ? `+$${(delta*offset).toFixed(2)} from base` : `−$${(Math.abs(delta)*offset).toFixed(2)} from base`);
+    const num = label.replace("Tray ","");
+    traysHTML += `
+    <div class="tray-row ${isBase?"base-tray":""}">
+      <div class="tray-badge">
+        <span class="tray-num">${num}</span>
+        <span class="tray-word">Tray</span>
+      </div>
+      <div class="tray-info">
+        <div class="tray-delta">${deltaText}</div>
+        <div class="tray-price">${fmt(price)}</div>
+      </div>
+    </div>`;
+  });
+  traysHTML += `</div>`;
+  resultsEl.innerHTML = traysHTML;
+
+  const avgSell  = prices.reduce((a,b) => a+b, 0) / prices.length;
+  const gpMarkup = calcMarkupPct(avgSell, costInc);
+  const profit   = (avgSell - costInc) / (1 + vat);
+
+  markupEl.innerHTML = `
+    <div class="markup-card">
+      <div class="markup-header">Markup Check</div>
+      <div class="markup-grid">
+        <div class="markup-cell">
+          <div class="markup-cell-label">Cost incl. VAT</div>
+          <div class="markup-cell-value">${fmt(costInc)}</div>
+        </div>
+        <div class="markup-cell">
+          <div class="markup-cell-label">Avg Sell Price</div>
+          <div class="markup-cell-value">${fmt(avgSell)}</div>
+        </div>
+        <div class="markup-cell">
+          <div class="markup-cell-label">Profit after VAT</div>
+          <div class="markup-cell-value">${fmt(profit)}</div>
+        </div>
+        <div class="markup-cell highlight">
+          <div class="markup-cell-label">GP Markup %</div>
+          <div class="markup-cell-value">${fmtPct(gpMarkup)}</div>
+        </div>
+      </div>
+      <div class="formula-note">Markup = (SP − Cost) ÷ (1 + VAT%) ÷ Cost incl. VAT</div>
+    </div>`;
+
+  resultsEl.style.opacity = 0; markupEl.style.opacity = 0;
+  requestAnimationFrame(() => {
+    resultsEl.style.transition = "opacity 0.25s";
+    markupEl.style.transition  = "opacity 0.25s ease 0.1s";
+    resultsEl.style.opacity    = 1; markupEl.style.opacity = 1;
+  });
+}
+
+
+// PWA manifest
+const manifest = {name:"Mnandi Tray Pricer",short_name:"Pricer",start_url:".",display:"standalone",background_color:"#8B0000",theme_color:"#8B0000"};
+const blob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
+const link = document.createElement("link"); link.rel="manifest"; link.href=URL.createObjectURL(blob);
+document.head.appendChild(link);
+</script>
+</body>
+</html>
